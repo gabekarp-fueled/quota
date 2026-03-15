@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/quota_header.png" alt="Quota — agents that earn the conversation" width="100%" />
+</p>
+
 # Quota
 
 An open-source autonomous sales agent framework built on [Claude](https://anthropic.com/claude). Quota runs a team of agents that research prospects, execute email sequences, monitor your inbox, and report on pipeline — all orchestrated by a CRO agent that reads your OKRs and decides what to focus on each day.
