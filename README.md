@@ -318,14 +318,14 @@ Each agent has a configurable model in the database, editable in the dashboard w
 
 Running 100 target accounts through a full sequence (monthly):
 
-| Service | Approx cost |
-|---------|-------------|
-| Claude API (Sonnet + Haiku mix) | $15–40/month |
-| Apollo.io (contact sourcing) | $49+/month (or credits) |
-| FullEnrich | $20–50/month depending on volume |
-| Railway (app + Postgres) | $5–10/month |
-| Attio (CRM) | Free tier available; paid plans from $34/user/month |
-| Gmail / Slack | Per your existing plans |
+| Service | Plan | Approx cost |
+|---------|------|-------------|
+| Claude API | Sonnet + Haiku mix | $15–40/month |
+| Attio | Plus (1 seat) | $29/month |
+| Apollo.io | Basic (2,500 credits/mo) | $49/month |
+| FullEnrich | Starter (500 credits/mo) | $29/month |
+| Railway | App + Postgres | $5–10/month |
+| Gmail / Slack | Your existing plans | $0 |
 
 Token spend is visible per-run in the dashboard. Set `email_daily_send_limit` and `*_batch_size` in `.env` to control pace and cost.
 
