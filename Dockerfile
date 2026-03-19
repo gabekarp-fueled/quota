@@ -10,7 +10,7 @@ FROM node:20-alpine AS ui-builder
 
 WORKDIR /app/ui
 COPY ui/package*.json ./
-RUN npm ci --prefer-offline
+RUN npm ci
 
 COPY ui/ ./
 RUN npm run build
