@@ -24,6 +24,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "slack-sdk>=3.27",
     "aiofiles>=23.2",
+    "aioimaplib>=1.0",
     "pydantic-settings>=2.0",
     "PyJWT>=2.8",
 ]

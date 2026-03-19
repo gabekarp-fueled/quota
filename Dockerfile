@@ -40,6 +40,7 @@ RUN pip install --upgrade pip && \
         python-dotenv \
         slack-sdk \
         aiofiles \
+        aioimaplib \
         pydantic-settings \
         PyJWT
 
