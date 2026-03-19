@@ -183,19 +183,15 @@ class FollowUpAgent:
         try:
             result = await self.attio.query_records(
                 object_slug="people",
-                filter_={"company": company_name},
+                filter_={"org_id": company_id},
                 limit=5,
             )
             records = result.get("data", [])
             for r in records:
-                values = r.get("values", {})
-                emails = values.get("email_addresses", [])
-                if emails:
-                    email = emails[0].get("email_address") if isinstance(emails[0], dict) else None
-                    if email:
-                        name_parts = values.get("name", [{}])
-                        name = name_parts[0].get("value") if name_parts else None
-                        return {"name": name or email.split("@")[0], "email": email}
+                email = r.get("email")
+                if email and "@" in email:
+                    name = r.get("name") or email.split("@")[0]
+                    return {"name": name, "email": email}
             return None
         except Exception as e:
             logger.error("Failed to get contact for %s: %s", company_name, e)

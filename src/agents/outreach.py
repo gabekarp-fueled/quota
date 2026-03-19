@@ -72,10 +72,7 @@ class OutreachAgent(BaseAgent):
                 try:
                     await self.attio.update_record(
                         "companies", company["id"],
-                        {"values": {
-                            "outreach_status": [{"option": "Nurture"}],
-                            "next_touch_date": [{"value": None}],
-                        }},
+                        {"outreach_status": "Nurture", "next_touch_date": None},
                     )
                 except Exception as e:
                     logger.warning("Failed to move %s to Nurture: %s", company["name"], e)
@@ -263,24 +260,14 @@ class OutreachAgent(BaseAgent):
         try:
             result = await self.attio.query_records(
                 object_slug="people",
-                filter_={"company": {"target_record_id": company_id}},
+                filter_={"org_id": company_id},
                 limit=10,
             )
             for person in result.get("data", []):
-                values = person.get("values", {})
-                emails = values.get("email_addresses", [])
-                email = next(
-                    (e.get("email_address") for e in emails if e.get("email_address") and "@" in e.get("email_address", "")),
-                    None,
-                )
-                if email:
-                    name_vals = values.get("name", [{}])
-                    full_name = (
-                        name_vals[0].get("full_name")
-                        or name_vals[0].get("value")
-                        or email.split("@")[0]
-                    ) if name_vals else email.split("@")[0]
-                    return {"email": email, "name": full_name}
+                email = person.get("email")
+                if email and "@" in email:
+                    name = person.get("name") or email.split("@")[0]
+                    return {"email": email, "name": name}
         except Exception as e:
             logger.warning("Pre-flight contact check failed for %s: %s", company_name, e)
         return None

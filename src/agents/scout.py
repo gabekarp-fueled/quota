@@ -10,33 +10,16 @@ VALID_TIERS = {"Tier 1", "Tier 2", "Tier 3"}
 
 
 def _parse_company(record: dict) -> dict:
-    """Extract common fields from an Attio company record."""
-    values = record.get("values", {})
-
-    def _get(slug, default=None):
-        attr = values.get(slug, [])
-        if not attr:
-            return default
-        first = attr[0]
-        if "option" in first:
-            return first["option"].get("title")
-        if "status" in first:
-            return first["status"].get("title")
-        if "email_address" in first:
-            return first["email_address"]
-        if "domain" in first:
-            return first["domain"]
-        return first.get("value", default)
-
+    """Extract common fields from a CRM company record (normalized flat dict from PipedriveClient)."""
     return {
-        "id": record.get("id", {}).get("record_id", ""),
-        "name": _get("name", ""),
-        "account_tier": _get("account_tier"),
-        "outreach_status": _get("outreach_status"),
-        "segment": _get("segment"),
-        "current_touch": _get("current_touch"),
-        "last_touch_date": _get("last_touch_date"),
-        "next_touch_date": _get("next_touch_date"),
+        "id": str(record.get("id", "")),
+        "name": record.get("name", ""),
+        "account_tier": record.get("account_tier"),
+        "outreach_status": record.get("outreach_status"),
+        "segment": record.get("segment"),
+        "current_touch": record.get("current_touch"),
+        "last_touch_date": record.get("last_touch_date"),
+        "next_touch_date": record.get("next_touch_date"),
     }
 
 
@@ -161,4 +144,4 @@ class ScoutAgent(BaseAgent):
             company.get("name"),
             agent_result.turns,
         )
-        return agent_result.text or "Research complete — brief saved to Attio."
+        return agent_result.text or "Research complete — brief saved to CRM."

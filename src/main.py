@@ -203,19 +203,16 @@ async def _init_db(app: FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── Attio CRM client ──────────────────────────────────────────────────
+    # ── Pipedrive CRM client ──────────────────────────────────────────────
     try:
-        from src.attio.client import AttioClient
-        app.state.attio = AttioClient(
-            api_token=settings.attio_api_token,
-            base_url=settings.attio_api_base_url,
-        )
-        if settings.attio_api_token:
-            logger.info("Attio client initialized")
+        from src.pipedrive.client import PipedriveClient
+        app.state.attio = PipedriveClient(api_token=settings.pipedrive_api_token)
+        if settings.pipedrive_api_token:
+            logger.info("Pipedrive client initialized")
         else:
-            logger.warning("ATTIO_API_TOKEN not set — all Attio operations will fail")
+            logger.warning("PIPEDRIVE_API_TOKEN not set — all CRM operations will fail")
     except ImportError:
-        logger.error("AttioClient not found — create src/attio/client.py")
+        logger.error("PipedriveClient not found — check src/pipedrive/client.py")
         app.state.attio = None
 
     # ── Claude API client ─────────────────────────────────────────────────
@@ -306,7 +303,7 @@ async def lifespan(app: FastAPI):
         app.state.slack = None
         app.state.slack_signing_secret = ""
         app.state.slack_approval_channel = ""
-        logger.warning("SLACK_BOT_TOKEN not set — Tier 1 approvals will be Attio-only (no Slack)")
+        logger.warning("SLACK_BOT_TOKEN not set — Tier 1 approvals will be CRM-only (no Slack)")
 
     # ── System prompts (loaded once from markdown files) ──────────────────
     try:

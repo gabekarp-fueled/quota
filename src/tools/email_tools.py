@@ -352,28 +352,44 @@ def register_email_tools(
         """Advance the outreach sequence for a specific contact after a touch is sent or saved."""
         today = date.today()
 
-        # ── Per-contact state update (People record) ──────────────────────
-        contact_updates: dict[str, Any] = {
-            "sequence_touch": [{"value": touch_completed}],
-            "last_touch_date": [{"value": today.isoformat()}],
-        }
-
         if touch_completed in TOUCH_GAPS:
             next_date = today + timedelta(days=TOUCH_GAPS[touch_completed])
-            contact_updates["next_touch_date"] = [{"value": next_date.isoformat()}]
-            contact_updates["sequence_status"] = [{"option": "Active"}]
+            new_sequence_status = "Active"
             sequence_complete = False
         else:
-            contact_updates["sequence_status"] = [{"option": "Nurture"}]
-            contact_updates["next_touch_date"] = [{"value": None}]
-            sequence_complete = True
             next_date = None
+            new_sequence_status = "Nurture"
+            sequence_complete = True
 
-        if touch_completed == 1:
-            contact_updates["sequence_status"] = [{"option": "Active"}]
-
+        # ── Log the completed touch as a done Pipedrive Activity ──────────
         try:
-            await attio.update_record("people", contact_record_id, {"values": contact_updates})
+            await attio.create_task(
+                content=f"Touch {touch_completed} sent",
+                deadline=today.isoformat(),
+                linked_records=[{"object": "persons", "id": contact_record_id}],
+                done=True,
+                activity_type="email",
+            )
+        except Exception as e:
+            logger.error("Failed to log completed touch activity for %s: %s", contact_record_id, e)
+            return {"error": f"Failed to log touch activity: {e}"}
+
+        # ── Schedule the next touch as a pending Activity ─────────────────
+        if next_date:
+            try:
+                await attio.create_task(
+                    content=f"Touch {touch_completed + 1} due",
+                    deadline=next_date.isoformat(),
+                    linked_records=[{"object": "persons", "id": contact_record_id}],
+                    done=False,
+                    activity_type="email",
+                )
+            except Exception as e:
+                logger.error("Failed to schedule next touch activity for %s: %s", contact_record_id, e)
+
+        # ── Update sequence_status on the contact (still a custom field) ──
+        try:
+            await attio.update_record("people", contact_record_id, {"sequence_status": new_sequence_status})
             logger.info(
                 "Contact sequence advanced: contact=%s touch=%d next=%s complete=%s",
                 contact_record_id, touch_completed,
@@ -381,25 +397,16 @@ def register_email_tools(
                 sequence_complete,
             )
         except Exception as e:
-            logger.error("Failed to advance contact sequence for %s: %s", contact_record_id, e)
-            return {"error": f"Failed to advance contact sequence: {e}"}
+            logger.error("Failed to update sequence_status for %s: %s", contact_record_id, e)
 
         # ── Company aggregate status update (optional) ────────────────────
-        if company_record_id:
+        if company_record_id and touch_completed == 1:
             try:
-                if touch_completed == 1:
-                    company_status = "Sequence Active"
-                else:
-                    company_status = None
-
-                if company_status:
-                    await attio.update_record(
-                        "companies",
-                        company_record_id,
-                        {"values": {"outreach_status": [{"option": company_status}]}},
-                    )
+                await attio.update_record(
+                    "companies", company_record_id, {"outreach_status": "Sequence Active"}
+                )
             except Exception as e:
-                logger.error("Aggregate company status update failed for %s: %s", company_record_id, e)
+                logger.error("Company status update failed for %s: %s", company_record_id, e)
 
         return {
             "status": "advanced",
@@ -415,9 +422,9 @@ def register_email_tools(
         description=(
             "Advance the outreach sequence for a specific contact after completing a touch. "
             "Call this AFTER email_send or email_save_draft. "
-            "Writes sequence state (sequence_touch, sequence_status, last_touch_date, "
-            "next_touch_date) to the People (contact) record — the per-contact source of truth. "
-            "Optionally also updates the Company's outreach_status as an aggregate. "
+            "Logs the completed touch as a done Pipedrive Activity, schedules the next touch "
+            "as a pending Activity with a due date, and updates the contact's sequence_status. "
+            "Optionally updates the Company's outreach_status to 'Sequence Active' on Touch 1. "
             "Cadence: Touch 1 → +8 days → Touch 2 → +14 days → Touch 3 → Nurture."
         ),
         input_schema={
@@ -425,7 +432,7 @@ def register_email_tools(
             "properties": {
                 "contact_record_id": {
                     "type": "string",
-                    "description": "Attio People record ID for the specific contact being advanced.",
+                    "description": "CRM People record ID for the specific contact being advanced.",
                 },
                 "touch_completed": {
                     "type": "integer",
@@ -434,7 +441,7 @@ def register_email_tools(
                 "company_record_id": {
                     "type": "string",
                     "description": (
-                        "Optional Attio company record ID. If provided, updates the Company's "
+                        "Optional CRM company record ID. If provided, updates the Company's "
                         "outreach_status to 'Sequence Active' when Touch 1 is completed."
                     ),
                 },

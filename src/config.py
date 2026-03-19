@@ -37,9 +37,8 @@ class Settings(BaseSettings):
     slack_signing_secret: str = ""
     slack_approval_channel_id: str = ""
 
-    # Attio CRM
-    attio_api_token: str = ""
-    attio_api_base_url: str = "https://api.attio.com/v2"
+    # Pipedrive CRM
+    pipedrive_api_token: str = ""
 
     # Service
     agent_service_host: str = "0.0.0.0"

@@ -158,7 +158,7 @@ class InboxMonitorAgent:
         try:
             await self.attio.update_record(
                 "companies", company_id,
-                {"values": {"outreach_status": [{"option": "Meeting Booked"}]}},
+                {"outreach_status": "Meeting Booked"},
             )
         except Exception as e:
             logger.error("Failed to update %s to Meeting Booked: %s", company_name, e)
@@ -249,7 +249,7 @@ class InboxMonitorAgent:
             try:
                 await self.attio.update_record(
                     "companies", company_id,
-                    {"values": {"outreach_status": [{"option": status_update}]}},
+                    {"outreach_status": status_update},
                 )
             except Exception as e:
                 logger.error("Failed to update status for %s: %s", company_name, e)
@@ -387,7 +387,7 @@ class InboxMonitorAgent:
         try:
             await self.attio.update_record(
                 "companies", company_id,
-                {"values": {"next_touch_date": [{"value": resume_date.isoformat()}]}},
+                {"next_touch_date": resume_date.isoformat()},
             )
         except Exception as e:
             logger.error("Failed to set OOO resume date for %s: %s", company_name, e)
@@ -589,23 +589,13 @@ class InboxMonitorAgent:
                 return None
 
             person = records[0]
-            values = person.get("values", {})
-
-            company_refs = values.get("company", [])
-            if company_refs and isinstance(company_refs, list) and len(company_refs) > 0:
-                company_ref = company_refs[0]
-                record_id = None
-                if isinstance(company_ref, dict):
-                    record_id = (
-                        company_ref.get("record_id")
-                        or company_ref.get("target_record_id")
-                        or (company_ref.get("target", {}) or {}).get("record_id")
-                    )
-
-                if record_id:
-                    from src.agents.scout import _parse_company
-                    company_data = await self.attio.get_record("companies", record_id)
-                    parsed = _parse_company(company_data.get("data", company_data))
+            # PipedriveClient returns normalized flat dicts — org_id links person → company
+            org_id = person.get("org_id")
+            if org_id:
+                from src.agents.scout import _parse_company
+                company_data = await self.attio.get_record("companies", org_id)
+                parsed = _parse_company(company_data.get("data", company_data))
+                if parsed.get("id"):
                     return {"id": parsed["id"], "name": parsed["name"]}
 
             domain = email_address.split("@")[1] if "@" in email_address else None
