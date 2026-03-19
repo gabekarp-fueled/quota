@@ -183,7 +183,7 @@ async def pipeline_summary(
 ):
     """Aggregate pipeline stats from Attio for the dashboard."""
     attio = getattr(request.app.state, "attio", None)
-    if not attio or not settings.attio_api_token:
+    if not attio or not settings.pipedrive_api_token:
         return {"available": False}
 
     try:
