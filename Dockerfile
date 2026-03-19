@@ -61,7 +61,7 @@ COPY src/ ./src/
 COPY prompts/ ./prompts/
 
 # Copy built React UI into static/ (served by FastAPI StaticFiles at "/")
-COPY --from=ui-builder /app/ui/dist ./static/
+COPY --from=ui-builder /app/static ./static/
 
 # Create non-root user
 RUN useradd -m -u 1001 quota && chown -R quota:quota /app
