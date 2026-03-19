@@ -40,7 +40,8 @@ RUN pip install --upgrade pip && \
         python-dotenv \
         slack-sdk \
         aiofiles \
-        pydantic-settings
+        pydantic-settings \
+        PyJWT
 
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────────────────
