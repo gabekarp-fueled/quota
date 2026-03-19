@@ -39,7 +39,8 @@ RUN pip install --upgrade pip && \
         email-validator \
         python-dotenv \
         slack-sdk \
-        aiofiles
+        aiofiles \
+        pydantic-settings
 
 
 # ── Stage 3: Runtime ─────────────────────────────────────────────────────────
